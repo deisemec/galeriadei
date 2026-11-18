@@ -10,116 +10,183 @@
       darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] }
+          fontFamily: { sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'] }
         }
       }
     }
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .hero-slide { transition: opacity 0.8s ease-in-out, transform 6s ease-out; }
-    .photo-card img { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-    .photo-card:hover img { transform: scale(1.06); }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    /* Transição suave estilo iOS no Hero */
+    .hero-layer {
+      transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 7s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    /* Cards da grade */
+    .photo-card {
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.25s ease;
+    }
+    .photo-card:hover { transform: translateY(-4px); }
+    .photo-card img {
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+    .photo-card:hover img { transform: scale(1.04); }
+
+    /* Lightbox estilo iOS Photos */
+    #lightbox {
+      transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #lbImagemWrapper {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      will-change: transform, opacity;
+    }
+    #lbBgBlur {
+      transition: background-image 0.6s ease-in-out;
+    }
+
+    /* Esconde barras de rolagem mantendo o scroll fluido */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 p-3 md:p-6">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 px-3 py-4 md:px-6 md:py-6">
 
-  <!-- BARRA SUPERIOR -->
-  <div class="max-w-7xl mx-auto mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-    <div>
-      <span class="text-[11px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Memória Institucional • DEI SEMEC</span>
-      <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Galeria de Ações & Registros</h1>
-    </div>
+  <!-- CONTAINER BEM MAIS LARGO PARA NÃO CORTAR -->
+  <div class="max-w-[1600px] mx-auto">
 
-    <div class="flex items-center gap-2">
-      <div class="relative flex-1 sm:w-64">
-        <input type="text" id="campoBusca" oninput="aplicarFiltros()" placeholder="Buscar evento ou legenda..."
-          class="w-full pl-9 pr-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs md:text-sm focus:border-blue-500 outline-none shadow-xs" />
-        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
+    <!-- BARRA SUPERIOR -->
+    <div class="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <span class="text-[11px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Memória Institucional • DEI SEMEC</span>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Galeria de Ações & Registros</h1>
       </div>
 
-      <!-- Botão Tema Claro/Escuro -->
-      <button onclick="alternarTema()" title="Alternar Tema"
-        class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 transition cursor-pointer shadow-xs">
-        <span id="iconeTema" class="text-sm">🌙</span>
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1 sm:w-72">
+          <input type="text" id="campoBusca" oninput="aplicarFiltros()" placeholder="Buscar evento ou legenda..."
+            class="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs md:text-sm focus:border-blue-500 outline-none shadow-xs" />
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+
+        <button onclick="alternarTema()" title="Alternar Tema"
+          class="p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 transition cursor-pointer shadow-xs">
+          <span id="iconeTema" class="text-sm">🌙</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- HERO CARROSSEL LARGO E FLUIDO (SEM CORTAR OS LADOS) -->
+    <div id="heroContainer" onclick="abrirLightboxDoHero()"
+      class="relative w-full h-[340px] sm:h-[440px] md:h-[540px] rounded-3xl overflow-hidden shadow-xl mb-7 bg-slate-900 cursor-pointer group select-none">
+      
+      <!-- Camadas de slides com fundo ambiente + imagem enquadrada -->
+      <div id="heroSlides" class="w-full h-full relative"></div>
+
+      <!-- Gradiente suave apenas na base para leitura do texto -->
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none"></div>
+
+      <!-- Legenda e Controles -->
+      <div class="absolute bottom-0 left-0 right-0 p-5 md:p-9 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="max-w-3xl">
+          <div class="flex items-center gap-2 mb-2">
+            <span id="heroAlbum" class="px-3 py-0.5 rounded-full text-[11px] font-bold bg-blue-600/90 backdrop-blur-md text-white uppercase tracking-wide">Sincronizando</span>
+            <span id="heroData" class="text-xs text-slate-200 font-medium drop-shadow"></span>
+          </div>
+          <h2 id="heroTitulo" class="text-xl sm:text-2xl md:text-4xl font-extrabold text-white leading-tight drop-shadow-sm">Carregando fotos do Google Drive...</h2>
+          <p id="heroDesc" class="text-xs md:text-sm text-slate-200/90 mt-1.5 line-clamp-2 max-w-2xl">Aguarde alguns instantes enquanto conectamos ao repositório oficial da DEI.</p>
+        </div>
+
+        <!-- Setas estilo vidro fosco iOS -->
+        <div class="flex items-center gap-2.5 self-start md:self-end" onclick="event.stopPropagation()">
+          <button onclick="mudarHero(-1)" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition cursor-pointer">❮</button>
+          <button onclick="mudarHero(1)" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition cursor-pointer">❯</button>
+        </div>
+      </div>
+
+      <!-- Indicadores (Pílulas estilo iOS) -->
+      <div id="heroDots" class="absolute top-5 right-6 flex gap-1.5" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <!-- BARRA DE FILTROS POR ÁLBUM -->
+    <div class="mb-6 flex items-center justify-between gap-4">
+      <div id="barraAlbuns" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1"></div>
+      <span id="contadorFotos" class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:inline"></span>
+    </div>
+
+    <!-- GRADE DE FOTOS (PROPORÇÃO WIDESCREEN 16:10 PARA NÃO CORTAR) -->
+    <div id="gridGaleria" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+
+    <!-- ESTADO VAZIO -->
+    <div id="estadoVazio" class="hidden max-w-md mx-auto text-center py-16">
+      <div class="text-4xl mb-3">📷</div>
+      <h3 id="vazioTitulo" class="font-bold text-lg">Nenhuma foto encontrada</h3>
+      <p id="vazioDesc" class="text-xs text-slate-500 mt-1">Verifique se há imagens na pasta do Google Drive ou limpe o filtro.</p>
+    </div>
+
+  </div>
+
+  <!-- LIGHTBOX ESTILO GALERIA DO IPHONE (iOS PHOTOS) -->
+  <div id="lightbox" class="fixed inset-0 z-50 hidden opacity-0 bg-black flex flex-col justify-between overflow-hidden select-none">
+    
+    <!-- Fundo dinâmico desfocado (Ambient Blur igual ao iOS) -->
+    <div id="lbBgBlur" class="absolute inset-0 bg-cover bg-center scale-125 blur-3xl opacity-45 pointer-events-none"></div>
+    <div class="absolute inset-0 bg-black/45 pointer-events-none"></div>
+
+    <!-- Barra Superior Translúcida (Glassmorphism iOS) -->
+    <div class="relative z-20 flex items-center justify-between px-4 py-3 md:px-8 md:py-4 bg-black/30 backdrop-blur-xl border-b border-white/10 text-white">
+      <div class="flex items-center gap-3">
+        <span id="lbAlbum" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-600/90">Álbum</span>
+        <div>
+          <h3 id="lbTitulo" class="font-bold text-sm md:text-base leading-tight line-clamp-1"></h3>
+          <p id="lbSubtitulo" class="text-[11px] text-slate-300"></p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="lbContador" class="hidden sm:inline text-xs font-medium text-slate-300 mr-2">1 / 10</span>
+        <a id="lbDownload" href="#" target="_blank" download
+          class="px-3.5 py-2 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-xs font-semibold flex items-center gap-1.5 transition">
+          ⬇ <span class="hidden sm:inline">Salvar original</span>
+        </a>
+        <button onclick="fecharLightbox()"
+          class="w-9 h-9 rounded-full bg-white/15 hover:bg-rose-600 text-white font-bold flex items-center justify-center transition cursor-pointer">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Área Central da Foto com Animação Fluida e Suporte a Toque (Swipe) -->
+    <div id="lbTouchArea" class="relative z-10 flex-1 flex items-center justify-center px-2 md:px-16 py-3 overflow-hidden">
+      <button onclick="navegarLightbox(-1)"
+        class="hidden md:flex absolute left-5 z-20 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-xl border border-white/15 text-white text-xl items-center justify-center transition cursor-pointer">
+        ❮
+      </button>
+
+      <div id="lbImagemWrapper" class="w-full h-full flex items-center justify-center">
+        <img id="lbImagem" src="" alt=""
+          class="max-h-[66vh] md:max-h-[70vh] max-w-[94vw] md:max-w-[85vw] rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.75)] object-contain" />
+      </div>
+
+      <button onclick="navegarLightbox(1)"
+        class="hidden md:flex absolute right-5 z-20 w-12 h-12 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-xl border border-white/15 text-white text-xl items-center justify-center transition cursor-pointer">
+        ❯
       </button>
     </div>
-  </div>
 
-  <!-- HERO CARROSSEL EM DESTAQUE -->
-  <div id="heroContainer" class="max-w-7xl mx-auto relative h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden shadow-xl mb-7 bg-slate-900 group">
-    <div id="heroSlides" class="w-full h-full relative"></div>
-
-    <!-- Gradiente e Legenda do Destaque -->
-    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent pointer-events-none"></div>
-    <div class="absolute bottom-0 left-0 right-0 p-5 md:p-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-      <div class="max-w-2xl">
-        <div class="flex items-center gap-2 mb-2">
-          <span id="heroAlbum" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600 text-white uppercase tracking-wide">Sincronizando</span>
-          <span id="heroData" class="text-xs text-slate-300 font-medium"></span>
-        </div>
-        <h2 id="heroTitulo" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight">Carregando fotos do Google Drive...</h2>
-        <p id="heroDesc" class="text-xs md:text-sm text-slate-300 mt-1 line-clamp-2">Aguarde alguns instantes enquanto conectamos ao repositório oficial da DEI.</p>
-      </div>
-
-      <!-- Controles do Carrossel -->
-      <div class="flex items-center gap-2 self-start md:self-end">
-        <button onclick="mudarHero(-1)" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-md text-white flex items-center justify-center transition cursor-pointer">❮</button>
-        <button onclick="mudarHero(1)" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-md text-white flex items-center justify-center transition cursor-pointer">❯</button>
-      </div>
+    <!-- Rodapé Estilo iPhone: Legenda + Carrossel de Miniaturas (Filmstrip) -->
+    <div class="relative z-20 bg-black/40 backdrop-blur-2xl border-t border-white/10 pt-2.5 pb-4 px-4">
+      <p id="lbDesc" class="text-center text-xs text-slate-200 max-w-3xl mx-auto mb-2.5 line-clamp-1"></p>
+      
+      <!-- Faixa de Miniaturas Deslizável (Filmstrip iOS) -->
+      <div id="lbFilmstrip" class="flex items-center justify-start md:justify-center gap-2 overflow-x-auto no-scrollbar py-1 px-2"></div>
     </div>
 
-    <!-- Indicadores (Bolinhas) -->
-    <div id="heroDots" class="absolute top-4 right-5 flex gap-1.5"></div>
-  </div>
-
-  <!-- BARRA DE FILTROS POR ÁLBUM (GERADA AUTOMATICAMENTE) -->
-  <div class="max-w-7xl mx-auto mb-6 flex items-center justify-between gap-4">
-    <div id="barraAlbuns" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1"></div>
-    <span id="contadorFotos" class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap hidden sm:inline"></span>
-  </div>
-
-  <!-- GRADE DE FOTOS -->
-  <div id="gridGaleria" class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
-
-  <!-- ESTADO VAZIO -->
-  <div id="estadoVazio" class="hidden max-w-md mx-auto text-center py-16">
-    <div class="text-4xl mb-3">📷</div>
-    <h3 id="vazioTitulo" class="font-bold text-lg">Nenhuma foto encontrada</h3>
-    <p id="vazioDesc" class="text-xs text-slate-500 mt-1">Verifique se há imagens (JPG, PNG ou WEBP) na pasta do Google Drive ou limpe o filtro.</p>
-  </div>
-
-  <!-- LIGHTBOX (VISUALIZADOR EM TELA CHEIA) -->
-  <div id="lightbox" class="fixed inset-0 z-50 hidden bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-4 md:p-8">
-    <div class="flex items-center justify-between text-white">
-      <div class="flex items-center gap-2">
-        <span id="lbAlbum" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-600">Álbum</span>
-        <span id="lbContador" class="text-xs text-slate-400">1 / 10</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <a id="lbDownload" href="#" target="_blank" download
-          class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold flex items-center gap-1.5 transition">
-          ⬇ Baixar original
-        </a>
-        <button onclick="fecharLightbox()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-rose-600 text-white font-bold transition cursor-pointer">✕</button>
-      </div>
-    </div>
-
-    <div class="relative flex-1 flex items-center justify-center my-4 overflow-hidden">
-      <button onclick="navegarLightbox(-1)" class="absolute left-2 md:left-4 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 text-white text-lg flex items-center justify-center transition cursor-pointer">❮</button>
-      <img id="lbImagem" src="" alt="" class="max-h-[72vh] max-w-full rounded-2xl shadow-2xl object-contain select-none" />
-      <button onclick="navegarLightbox(1)" class="absolute right-2 md:right-4 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 text-white text-lg flex items-center justify-center transition cursor-pointer">❯</button>
-    </div>
-
-    <div class="max-w-3xl mx-auto text-center text-white">
-      <h3 id="lbTitulo" class="font-bold text-base md:text-lg"></h3>
-      <p id="lbDesc" class="text-xs text-slate-400 mt-1"></p>
-    </div>
   </div>
 
   <script>
@@ -166,48 +233,51 @@
 
     function renderizarTudo() {
       gerarBotoesAlbuns();
-      iniciarHero(todasFotos.slice(0, 5));
+      iniciarHero(todasFotos.slice(0, 6));
       aplicarFiltros();
     }
 
-    // --- HERO CARROSSEL ---
+    // --- HERO CARROSSEL LARGO COM ENQUADRAMENTO INTELIGENTE ---
     function iniciarHero(destaques) {
       if (!destaques.length) return;
       const container = document.getElementById('heroSlides');
       const dots = document.getElementById('heroDots');
 
       container.innerHTML = destaques.map((f, i) => `
-        <img src="${f.url}" alt="${f.titulo}"
-          class="hero-slide absolute inset-0 w-full h-full object-cover ${i === 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}"
-          data-idx="${i}" />
+        <div class="hero-layer absolute inset-0 w-full h-full ${i === 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}">
+          <!-- Fundo desfocado para preencher telas ultra-largas sem cortar nada da foto -->
+          <img src="${f.url}" alt="" class="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-50" />
+          <!-- Foto principal enquadrada por inteiro (object-contain em telas muito largas / object-cover suave) -->
+          <img src="${f.url}" alt="${f.titulo}" class="relative w-full h-full object-contain md:object-cover object-center" />
+        </div>
       `).join('');
 
       dots.innerHTML = destaques.map((_, i) => `
-        <button onclick="irParaHero(${i})" class="hero-dot h-1.5 rounded-full transition-all cursor-pointer ${i === 0 ? 'w-6 bg-blue-500' : 'w-2 bg-white/50'}"></button>
+        <button onclick="irParaHero(${i})" class="hero-dot h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === 0 ? 'w-7 bg-blue-500' : 'w-2 bg-white/50'}"></button>
       `).join('');
 
       atualizarTextoHero(destaques[0]);
       clearInterval(heroTimer);
       if (destaques.length > 1) {
-        heroTimer = setInterval(() => mudarHero(1), 5000);
+        heroTimer = setInterval(() => mudarHero(1), 5500);
       }
     }
 
     function mudarHero(direcao) {
-      const destaques = todasFotos.slice(0, 5);
+      const destaques = todasFotos.slice(0, 6);
       if (!destaques.length) return;
       heroIndex = (heroIndex + direcao + destaques.length) % destaques.length;
       irParaHero(heroIndex);
     }
 
     function irParaHero(idx) {
-      const destaques = todasFotos.slice(0, 5);
+      const destaques = todasFotos.slice(0, 6);
       heroIndex = idx;
-      document.querySelectorAll('.hero-slide').forEach((img, i) => {
-        img.className = `hero-slide absolute inset-0 w-full h-full object-cover ${i === idx ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`;
+      document.querySelectorAll('.hero-layer').forEach((layer, i) => {
+        layer.className = `hero-layer absolute inset-0 w-full h-full ${i === idx ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`;
       });
       document.querySelectorAll('.hero-dot').forEach((dot, i) => {
-        dot.className = `hero-dot h-1.5 rounded-full transition-all cursor-pointer ${i === idx ? 'w-6 bg-blue-500' : 'w-2 bg-white/50'}`;
+        dot.className = `hero-dot h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === idx ? 'w-7 bg-blue-500' : 'w-2 bg-white/50'}`;
       });
       atualizarTextoHero(destaques[idx]);
     }
@@ -217,6 +287,14 @@
       document.getElementById('heroData').textContent = `• ${foto.data}`;
       document.getElementById('heroTitulo').textContent = foto.titulo;
       document.getElementById('heroDesc').textContent = foto.descricao;
+    }
+
+    function abrirLightboxDoHero() {
+      const destaques = todasFotos.slice(0, 6);
+      const fotoAtualHero = destaques[heroIndex];
+      if (!fotoAtualHero) return;
+      const idxNaLista = fotosFiltradas.findIndex(f => f.id === fotoAtualHero.id);
+      abrirLightbox(idxNaLista >= 0 ? idxNaLista : 0);
     }
 
     // --- FILTROS POR ÁLBUM E BUSCA ---
@@ -229,7 +307,7 @@
         const label = alb === 'TODOS' ? `Todas as Fotos (${todasFotos.length})` : alb;
         return `
           <button onclick="selecionarAlbum('${alb}')"
-            class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+            class="px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
               ativo
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-blue-500'
@@ -270,10 +348,10 @@
       vazio.classList.add('hidden');
       grid.innerHTML = fotosFiltradas.map((f, idx) => `
         <div onclick="abrirLightbox(${idx})"
-          class="photo-card group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-xl hover:border-blue-500 transition cursor-pointer flex flex-col">
-          <div class="relative aspect-[4/3] overflow-hidden bg-slate-200 dark:bg-slate-800">
-            <img src="${f.thumb}" alt="${f.titulo}" loading="lazy" class="w-full h-full object-cover" />
-            <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/75 text-white backdrop-blur-xs">
+          class="photo-card group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-xl hover:border-blue-500 cursor-pointer flex flex-col">
+          <div class="relative aspect-[16/10] overflow-hidden bg-slate-200 dark:bg-slate-800">
+            <img src="${f.thumb}" alt="${f.titulo}" loading="lazy" class="w-full h-full object-cover object-center" />
+            <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/75 text-white backdrop-blur-md">
               ${f.album}
             </span>
           </div>
@@ -286,42 +364,137 @@
             </div>
             <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-medium text-slate-400">
               <span>📅 ${f.data}</span>
-              <span class="text-blue-600 dark:text-blue-400 font-semibold">Ampliar ↗</span>
+              <span class="text-blue-600 dark:text-blue-400 font-semibold">Visualizar ↗</span>
             </div>
           </div>
         </div>
       `).join('');
     }
 
-    // --- LIGHTBOX ---
+    // --- LIGHTBOX ESTILO IPHONE (iOS PHOTOS) ---
     function abrirLightbox(idx) {
       lightboxIndex = idx;
-      atualizarLightbox();
-      document.getElementById('lightbox').classList.remove('hidden');
+      renderizarFilmstrip();
+      atualizarLightbox(0);
+
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        lb.classList.remove('opacity-0');
+        lb.classList.add('opacity-100');
+      });
       document.body.style.overflow = 'hidden';
     }
 
     function fecharLightbox() {
-      document.getElementById('lightbox').classList.add('hidden');
-      document.body.style.overflow = '';
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('opacity-100');
+      lb.classList.add('opacity-0');
+      setTimeout(() => {
+        lb.classList.add('hidden');
+        document.body.style.overflow = '';
+      }, 300);
     }
 
     function navegarLightbox(dir) {
+      if (!fotosFiltradas.length) return;
       lightboxIndex = (lightboxIndex + dir + fotosFiltradas.length) % fotosFiltradas.length;
-      atualizarLightbox();
+      atualizarLightbox(dir);
     }
 
-    function atualizarLightbox() {
+    function irParaFotoLightbox(idx) {
+      const dir = idx > lightboxIndex ? 1 : -1;
+      lightboxIndex = idx;
+      atualizarLightbox(dir);
+    }
+
+    function atualizarLightbox(direcao = 0) {
       const f = fotosFiltradas[lightboxIndex];
       if (!f) return;
-      document.getElementById('lbImagem').src = f.url;
+
+      const wrapper = document.getElementById('lbImagemWrapper');
+      const img = document.getElementById('lbImagem');
+      const bgBlur = document.getElementById('lbBgBlur');
+
+      // Animação fluida de deslize + escala estilo iOS
+      if (direcao !== 0) {
+        wrapper.style.opacity = '0.35';
+        wrapper.style.transform = `translateX(${direcao * 28}px) scale(0.97)`;
+      }
+
+      setTimeout(() => {
+        img.src = f.url;
+        bgBlur.style.backgroundImage = `url('${f.thumb}')`;
+        wrapper.style.opacity = '1';
+        wrapper.style.transform = 'translateX(0) scale(1)';
+      }, direcao !== 0 ? 110 : 0);
+
+      // Pré-carrega vizinhas para transição instantânea sem falha
+      preCarregarVizinhas(lightboxIndex);
+
       document.getElementById('lbAlbum').textContent = f.album;
-      document.getElementById('lbContador').textContent = `${lightboxIndex + 1} / ${fotosFiltradas.length}`;
+      document.getElementById('lbContador').textContent = `${lightboxIndex + 1} de ${fotosFiltradas.length}`;
       document.getElementById('lbTitulo').textContent = f.titulo;
-      document.getElementById('lbDesc').textContent = `${f.descricao} • Registrado em ${f.data}`;
+      document.getElementById('lbSubtitulo').textContent = `Registrado em ${f.data}`;
+      document.getElementById('lbDesc').textContent = f.descricao;
       document.getElementById('lbDownload').href = f.downloadUrl || f.url;
+
+      atualizarDestaqueFilmstrip();
     }
 
+    function preCarregarVizinhas(idx) {
+      if (fotosFiltradas.length <= 1) return;
+      const prox = fotosFiltradas[(idx + 1) % fotosFiltradas.length];
+      const ant = fotosFiltradas[(idx - 1 + fotosFiltradas.length) % fotosFiltradas.length];
+      [prox, ant].forEach(item => {
+        if (item && item.url) {
+          const preload = new Image();
+          preload.src = item.url;
+        }
+      });
+    }
+
+    function renderizarFilmstrip() {
+      const strip = document.getElementById('lbFilmstrip');
+      strip.innerHTML = fotosFiltradas.map((f, i) => `
+        <button id="thumb-btn-${i}" onclick="irParaFotoLightbox(${i})"
+          class="relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer border-2 ${
+            i === lightboxIndex
+              ? 'border-white scale-110 shadow-lg opacity-100 mx-1'
+              : 'border-transparent opacity-50 hover:opacity-85'
+          }">
+          <img src="${f.thumb}" alt="" class="w-full h-full object-cover" />
+        </button>
+      `).join('');
+    }
+
+    function atualizarDestaqueFilmstrip() {
+      fotosFiltradas.forEach((_, i) => {
+        const btn = document.getElementById(`thumb-btn-${i}`);
+        if (!btn) return;
+        if (i === lightboxIndex) {
+          btn.className = 'relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer border-2 border-white scale-110 shadow-lg opacity-100 mx-1';
+          btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } else {
+          btn.className = 'relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer border-2 border-transparent opacity-50 hover:opacity-85';
+        }
+      });
+    }
+
+    // Suporte a gesto de deslizar (Swipe) no celular/tablet
+    let touchStartX = 0;
+    const touchArea = document.getElementById('lbTouchArea');
+    touchArea.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    touchArea.addEventListener('touchend', (e) => {
+      const diff = e.changedTouches[0].screenX - touchStartX;
+      if (Math.abs(diff) > 45) {
+        navegarLightbox(diff < 0 ? 1 : -1);
+      }
+    }, { passive: true });
+
+    // Atalhos de teclado
     document.addEventListener('keydown', (e) => {
       if (document.getElementById('lightbox').classList.contains('hidden')) return;
       if (e.key === 'Escape') fecharLightbox();
