@@ -21,7 +21,6 @@
     .hero-slide { transition: opacity 0.8s ease-in-out, transform 6s ease-out; }
     .photo-card img { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
     .photo-card:hover img { transform: scale(1.06); }
-    /* Esconde scrollbar horizontal nos filtros mobile */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -61,11 +60,11 @@
     <div class="absolute bottom-0 left-0 right-0 p-5 md:p-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div class="max-w-2xl">
         <div class="flex items-center gap-2 mb-2">
-          <span id="heroAlbum" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600 text-white uppercase tracking-wide">Destaque</span>
+          <span id="heroAlbum" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-600 text-white uppercase tracking-wide">Sincronizando</span>
           <span id="heroData" class="text-xs text-slate-300 font-medium"></span>
         </div>
-        <h2 id="heroTitulo" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight">Carregando registros...</h2>
-        <p id="heroDesc" class="text-xs md:text-sm text-slate-300 mt-1 line-clamp-2"></p>
+        <h2 id="heroTitulo" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight">Carregando fotos do Google Drive...</h2>
+        <p id="heroDesc" class="text-xs md:text-sm text-slate-300 mt-1 line-clamp-2">Aguarde alguns instantes enquanto conectamos ao repositório oficial da DEI.</p>
       </div>
 
       <!-- Controles do Carrossel -->
@@ -91,13 +90,12 @@
   <!-- ESTADO VAZIO -->
   <div id="estadoVazio" class="hidden max-w-md mx-auto text-center py-16">
     <div class="text-4xl mb-3">📷</div>
-    <h3 class="font-bold text-lg">Nenhuma foto encontrada</h3>
-    <p class="text-xs text-slate-500 mt-1">Tente limpar o filtro de busca ou selecionar outro álbum.</p>
+    <h3 id="vazioTitulo" class="font-bold text-lg">Nenhuma foto encontrada</h3>
+    <p id="vazioDesc" class="text-xs text-slate-500 mt-1">Verifique se há imagens (JPG, PNG ou WEBP) na pasta do Google Drive ou limpe o filtro.</p>
   </div>
 
   <!-- LIGHTBOX (VISUALIZADOR EM TELA CHEIA) -->
   <div id="lightbox" class="fixed inset-0 z-50 hidden bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-4 md:p-8">
-    <!-- Topo Lightbox -->
     <div class="flex items-center justify-between text-white">
       <div class="flex items-center gap-2">
         <span id="lbAlbum" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-600">Álbum</span>
@@ -112,14 +110,12 @@
       </div>
     </div>
 
-    <!-- Imagem Central + Setas -->
     <div class="relative flex-1 flex items-center justify-center my-4 overflow-hidden">
       <button onclick="navegarLightbox(-1)" class="absolute left-2 md:left-4 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 text-white text-lg flex items-center justify-center transition cursor-pointer">❮</button>
       <img id="lbImagem" src="" alt="" class="max-h-[72vh] max-w-full rounded-2xl shadow-2xl object-contain select-none" />
       <button onclick="navegarLightbox(1)" class="absolute right-2 md:right-4 z-10 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 text-white text-lg flex items-center justify-center transition cursor-pointer">❯</button>
     </div>
 
-    <!-- Rodapé Lightbox -->
     <div class="max-w-3xl mx-auto text-center text-white">
       <h3 id="lbTitulo" class="font-bold text-base md:text-lg"></h3>
       <p id="lbDesc" class="text-xs text-slate-400 mt-1"></p>
@@ -127,10 +123,7 @@
   </div>
 
   <script>
-   // =========================================================================
-    // COLE AQUI A URL DO SEU GOOGLE APPS SCRIPT PUBLICADO:
-    const API_URL = 'COLE_AQUI_A_URL_DO_SEU_APP_DA_WEB_QUE_TERMINA_COM_EXEC'; 
-    // =========================================================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxTgzWXFQh7BYQAGZg0kA8BKSPSRnd1U7cVV36Fw7EuepMGIcYvzgFnkUJdzGTquCic7g/exec';
 
     let todasFotos = [];
     let fotosFiltradas = [];
@@ -140,29 +133,40 @@
     let lightboxIndex = 0;
 
     async function iniciarGaleria() {
-      if (!API_URL || API_URL.includes('COLE_AQUI')) {
-        document.getElementById('heroTitulo').textContent = 'Configure a URL do Apps Script';
-        document.getElementById('heroDesc').textContent = 'Cole o link /exec da implantação na variável API_URL do arquivo index.html.';
-        return;
-      }
-
       try {
         const resp = await fetch(API_URL);
         const dados = await resp.json();
-        if (dados.status === 'ok' && dados.fotos.length > 0) {
+
+        if (dados.status === 'ok' && Array.isArray(dados.fotos) && dados.fotos.length > 0) {
           todasFotos = dados.fotos;
+          renderizarTudo();
         } else {
-          todasFotos = [];
+          mostrarAvisoVazio(
+            'Nenhuma imagem encontrada na pasta do Drive',
+            'Adicione arquivos JPG, PNG ou WEBP na pasta vinculada e atualize esta página.'
+          );
         }
       } catch (e) {
         console.error('Erro ao carregar fotos do Drive:', e);
-        todasFotos = [];
+        mostrarAvisoVazio(
+          'Erro de conexão com o Google Drive',
+          'Verifique se a implantação do Apps Script está publicada como "Qualquer pessoa".'
+        );
       }
-      renderizarTudo();
     }
+
+    function mostrarAvisoVazio(titulo, desc) {
+      document.getElementById('heroAlbum').textContent = 'Aviso';
+      document.getElementById('heroTitulo').textContent = titulo;
+      document.getElementById('heroDesc').textContent = desc;
+      document.getElementById('vazioTitulo').textContent = titulo;
+      document.getElementById('vazioDesc').textContent = desc;
+      document.getElementById('estadoVazio').classList.remove('hidden');
+    }
+
     function renderizarTudo() {
       gerarBotoesAlbuns();
-      iniciarHero(todasFotos.slice(0, 5)); // Top 5 fotos no destaque
+      iniciarHero(todasFotos.slice(0, 5));
       aplicarFiltros();
     }
 
@@ -184,7 +188,9 @@
 
       atualizarTextoHero(destaques[0]);
       clearInterval(heroTimer);
-      heroTimer = setInterval(() => mudarHero(1), 5000);
+      if (destaques.length > 1) {
+        heroTimer = setInterval(() => mudarHero(1), 5000);
+      }
     }
 
     function mudarHero(direcao) {
@@ -316,7 +322,6 @@
       document.getElementById('lbDownload').href = f.downloadUrl || f.url;
     }
 
-    // Atalhos de teclado no Lightbox (ESC e Setas)
     document.addEventListener('keydown', (e) => {
       if (document.getElementById('lightbox').classList.contains('hidden')) return;
       if (e.key === 'Escape') fecharLightbox();
@@ -324,7 +329,6 @@
       if (e.key === 'ArrowLeft') navegarLightbox(-1);
     });
 
-    // --- TEMA CLARO / ESCURO ---
     function alternarTema() {
       const html = document.documentElement;
       html.classList.toggle('dark');
