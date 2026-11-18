@@ -69,6 +69,11 @@
           </svg>
         </div>
 
+        <button onclick="recarregarManual()" title="Atualizar Fotos"
+          class="p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 transition cursor-pointer shadow-xs text-sm">
+          🔄
+        </button>
+
         <button onclick="alternarTema()" title="Alternar Tema"
           class="p-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 transition cursor-pointer shadow-xs">
           <span id="iconeTema" class="text-sm">🌙</span>
@@ -111,19 +116,19 @@
     <!-- GRADE DE FOTOS HORIZONTAL (16:10) -->
     <div id="gridGaleria" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
 
-    <!-- ESTADO VAZIO -->
-    <div id="estadoVazio" class="hidden max-w-md mx-auto text-center py-16">
+    <!-- ESTADO VAZIO / ERRO -->
+    <div id="estadoVazio" class="hidden max-w-md mx-auto text-center py-12">
       <div class="text-4xl mb-3">📷</div>
       <h3 id="vazioTitulo" class="font-bold text-lg">Nenhuma foto encontrada</h3>
       <p id="vazioDesc" class="text-xs text-slate-500 mt-1">Verifique se há imagens na pasta do Google Drive ou limpe o filtro.</p>
+      <button onclick="recarregarManual()" class="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold cursor-pointer">Tentar novamente</button>
     </div>
 
   </div>
 
-  <!-- LIGHTBOX HORIZONTAL ESTILO GALERIA DO IPHONE (COM TELA CHEIA REAL) -->
+  <!-- LIGHTBOX HORIZONTAL ESTILO GALERIA DO IPHONE -->
   <div id="lightbox" class="fixed inset-0 z-50 hidden opacity-0 bg-black flex flex-col justify-between overflow-hidden select-none">
     
-    <!-- Fundo dinâmico desfocado -->
     <div id="lbBgBlur" class="absolute inset-0 bg-cover bg-center scale-125 blur-3xl opacity-50 pointer-events-none"></div>
     <div class="absolute inset-0 bg-black/40 pointer-events-none"></div>
 
@@ -139,13 +144,9 @@
 
       <div class="flex items-center gap-2 flex-shrink-0">
         <span id="lbContador" class="hidden sm:inline text-xs font-medium text-slate-300 mr-2">1 de 10</span>
-        <button onclick="alternarTelaCheia()" title="Expandir Tela Cheia"
-          class="px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
-          ⛶ <span class="hidden md:inline">Tela Cheia</span>
-        </button>
         <a id="lbDownload" href="#" target="_blank" download
-          class="px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-xs font-semibold flex items-center gap-1.5 transition">
-          ⬇ <span class="hidden md:inline">Original</span>
+          class="px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-xs font-semibold flex items-center gap-1.5 transition">
+          ⬇ <span class="hidden md:inline">Salvar original</span>
         </a>
         <button onclick="fecharLightbox()"
           class="w-9 h-9 rounded-full bg-white/15 hover:bg-rose-600 text-white font-bold flex items-center justify-center transition cursor-pointer">
@@ -191,8 +192,23 @@
     let lightboxIndex = 0;
 
     async function iniciarGaleria() {
+      document.getElementById('estadoVazio').classList.add('hidden');
+      document.getElementById('heroAlbum').textContent = 'Sincronizando';
+      document.getElementById('heroTitulo').textContent = 'Carregando fotos do Google Drive...';
+      document.getElementById('heroDesc').textContent = 'Conectando ao repositório oficial da DEI.';
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       try {
-        const resp = await fetch(API_URL);
+        const resp = await fetch(`${API_URL}?t=${Date.now()}`, {
+          method: 'GET',
+          redirect: 'follow',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const dados = await resp.json();
 
         if (dados.status === 'ok' && Array.isArray(dados.fotos) && dados.fotos.length > 0) {
@@ -201,16 +217,21 @@
         } else {
           mostrarAvisoVazio(
             'Nenhuma imagem encontrada na pasta do Drive',
-            'Adicione arquivos JPG, PNG ou WEBP na pasta vinculada e atualize esta página.'
+            'Adicione arquivos JPG, PNG ou WEBP na pasta vinculada e clique em atualizar.'
           );
         }
       } catch (e) {
+        clearTimeout(timeoutId);
         console.error('Erro ao carregar fotos do Drive:', e);
         mostrarAvisoVazio(
-          'Erro de conexão com o Google Drive',
-          'Verifique se a implantação do Apps Script está publicada como "Qualquer pessoa".'
+          'Não foi possível carregar as fotos agora',
+          'Verifique se a pasta no Drive está como "Qualquer pessoa com o link" e clique em Tentar novamente.'
         );
       }
+    }
+
+    function recarregarManual() {
+      iniciarGaleria();
     }
 
     function mostrarAvisoVazio(titulo, desc) {
@@ -236,4 +257,262 @@
       container.innerHTML = destaques.map((f, i) => `
         <div class="hero-layer absolute inset-0 w-full h-full ${i === 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}">
           <img src="${f.url}" alt="" class="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-50" />
-          <img src="${f.url}" alt="${f
+          <img src="${f.url}" alt="${f.titulo}" class="relative w-full h-full object-contain md:object-cover object-center" />
+        </div>
+      `).join('');
+
+      dots.innerHTML = destaques.map((_, i) => `
+        <button onclick="irParaHero(${i})" class="hero-dot h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === 0 ? 'w-7 bg-blue-500' : 'w-2 bg-white/50'}"></button>
+      `).join('');
+
+      atualizarTextoHero(destaques[0]);
+      clearInterval(heroTimer);
+      if (destaques.length > 1) {
+        heroTimer = setInterval(() => mudarHero(1), 5500);
+      }
+    }
+
+    function mudarHero(direcao) {
+      const destaques = todasFotos.slice(0, 6);
+      if (!destaques.length) return;
+      heroIndex = (heroIndex + direcao + destaques.length) % destaques.length;
+      irParaHero(heroIndex);
+    }
+
+    function irParaHero(idx) {
+      const destaques = todasFotos.slice(0, 6);
+      heroIndex = idx;
+      document.querySelectorAll('.hero-layer').forEach((layer, i) => {
+        layer.className = `hero-layer absolute inset-0 w-full h-full ${i === idx ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`;
+      });
+      document.querySelectorAll('.hero-dot').forEach((dot, i) => {
+        dot.className = `hero-dot h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === idx ? 'w-7 bg-blue-500' : 'w-2 bg-white/50'}`;
+      });
+      atualizarTextoHero(destaques[idx]);
+    }
+
+    function atualizarTextoHero(foto) {
+      document.getElementById('heroAlbum').textContent = foto.album;
+      document.getElementById('heroData').textContent = `• ${foto.data}`;
+      document.getElementById('heroTitulo').textContent = foto.titulo;
+      document.getElementById('heroDesc').textContent = foto.descricao;
+    }
+
+    function abrirLightboxDoHero() {
+      const destaques = todasFotos.slice(0, 6);
+      const fotoAtualHero = destaques[heroIndex];
+      if (!fotoAtualHero) return;
+      const idxNaLista = fotosFiltradas.findIndex(f => f.id === fotoAtualHero.id);
+      abrirLightbox(idxNaLista >= 0 ? idxNaLista : 0);
+    }
+
+    function gerarBotoesAlbuns() {
+      const albuns = ['TODOS', ...new Set(todasFotos.map(f => f.album))];
+      const barra = document.getElementById('barraAlbuns');
+
+      barra.innerHTML = albuns.map(alb => {
+        const ativo = alb === albumAtual;
+        const label = alb === 'TODOS' ? `Todas as Fotos (${todasFotos.length})` : alb;
+        return `
+          <button onclick="selecionarAlbum('${alb}')"
+            class="px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+              ativo
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-blue-500'
+            }">
+            ${label}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selecionarAlbum(alb) {
+      albumAtual = alb;
+      gerarBotoesAlbuns();
+      aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+      const termo = document.getElementById('campoBusca').value.toLowerCase().trim();
+      fotosFiltradas = todasFotos.filter(f => {
+        const matchAlbum = albumAtual === 'TODOS' || f.album === albumAtual;
+        const matchTexto = !termo ||
+          f.titulo.toLowerCase().includes(termo) ||
+          f.descricao.toLowerCase().includes(termo) ||
+          f.album.toLowerCase().includes(termo);
+        return matchAlbum && matchTexto;
+      });
+
+      document.getElementById('contadorFotos').textContent = `${fotosFiltradas.length} registro(s)`;
+      const grid = document.getElementById('gridGaleria');
+      const vazio = document.getElementById('estadoVazio');
+
+      if (!fotosFiltradas.length) {
+        grid.innerHTML = '';
+        vazio.classList.remove('hidden');
+        return;
+      }
+
+      vazio.classList.add('hidden');
+      grid.innerHTML = fotosFiltradas.map((f, idx) => `
+        <div onclick="abrirLightbox(${idx})"
+          class="photo-card group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-xl hover:border-blue-500 cursor-pointer flex flex-col">
+          <div class="relative aspect-[16/10] overflow-hidden bg-slate-200 dark:bg-slate-800">
+            <img src="${f.thumb}" alt="${f.titulo}" loading="lazy" class="w-full h-full object-cover object-center" />
+            <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/75 text-white backdrop-blur-md">
+              ${f.album}
+            </span>
+          </div>
+          <div class="p-4 flex-1 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition line-clamp-2">
+                ${f.titulo}
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">${f.descricao}</p>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-medium text-slate-400">
+              <span>📅 ${f.data}</span>
+              <span class="text-blue-600 dark:text-blue-400 font-semibold">Visualizar ↗</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- LIGHTBOX HORIZONTAL ESTILO GALERIA DO IPHONE ---
+    function abrirLightbox(idx) {
+      lightboxIndex = idx;
+      renderizarFilmstrip();
+      atualizarLightbox(0);
+
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        lb.classList.remove('opacity-0');
+        lb.classList.add('opacity-100');
+      });
+      document.body.style.overflow = 'hidden';
+    }
+
+    function fecharLightbox() {
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('opacity-100');
+      lb.classList.add('opacity-0');
+      setTimeout(() => {
+        lb.classList.add('hidden');
+        document.body.style.overflow = '';
+      }, 280);
+    }
+
+    function navegarLightbox(dir) {
+      if (!fotosFiltradas.length) return;
+      lightboxIndex = (lightboxIndex + dir + fotosFiltradas.length) % fotosFiltradas.length;
+      atualizarLightbox(dir);
+    }
+
+    function irParaFotoLightbox(idx) {
+      const dir = idx > lightboxIndex ? 1 : -1;
+      lightboxIndex = idx;
+      atualizarLightbox(dir);
+    }
+
+    function atualizarLightbox(direcao = 0) {
+      const f = fotosFiltradas[lightboxIndex];
+      if (!f) return;
+
+      const wrapper = document.getElementById('lbImagemWrapper');
+      const img = document.getElementById('lbImagem');
+      const bgBlur = document.getElementById('lbBgBlur');
+
+      if (direcao !== 0) {
+        wrapper.style.opacity = '0.35';
+        wrapper.style.transform = `translateX(${direcao * 28}px) scale(0.97)`;
+      }
+
+      setTimeout(() => {
+        img.src = f.url;
+        bgBlur.style.backgroundImage = `url('${f.thumb}')`;
+        wrapper.style.opacity = '1';
+        wrapper.style.transform = 'translateX(0) scale(1)';
+      }, direcao !== 0 ? 100 : 0);
+
+      preCarregarVizinhas(lightboxIndex);
+
+      document.getElementById('lbAlbum').textContent = f.album;
+      document.getElementById('lbContador').textContent = `${lightboxIndex + 1} de ${fotosFiltradas.length}`;
+      document.getElementById('lbTitulo').textContent = f.titulo;
+      document.getElementById('lbSubtitulo').textContent = `Registrado em ${f.data}`;
+      document.getElementById('lbDesc').textContent = f.descricao;
+      document.getElementById('lbDownload').href = f.downloadUrl || f.url;
+
+      atualizarDestaqueFilmstrip();
+    }
+
+    function preCarregarVizinhas(idx) {
+      if (fotosFiltradas.length <= 1) return;
+      const prox = fotosFiltradas[(idx + 1) % fotosFiltradas.length];
+      const ant = fotosFiltradas[(idx - 1 + fotosFiltradas.length) % fotosFiltradas.length];
+      [prox, ant].forEach(item => {
+        if (item && item.url) {
+          const preload = new Image();
+          preload.src = item.url;
+        }
+      });
+    }
+
+    function renderizarFilmstrip() {
+      const strip = document.getElementById('lbFilmstrip');
+      strip.innerHTML = fotosFiltradas.map((f, i) => `
+        <button id="thumb-btn-${i}" onclick="irParaFotoLightbox(${i})"
+          class="relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer border-2 ${
+            i === lightboxIndex
+              ? 'border-white scale-110 shadow-lg opacity-100 mx-1'
+              : 'border-transparent opacity-50 hover:opacity-85'
+          }">
+          <img src="${f.thumb}" alt="" class="w-full h-full object-cover" />
+        </button>
+      `).join('');
+    }
+
+    function atualizarDestaqueFilmstrip() {
+      fotosFiltradas.forEach((_, i) => {
+        const btn = document.getElementById(`thumb-btn-${i}`);
+        if (!btn) return;
+        if (i === lightboxIndex) {
+          btn.className = 'relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer border-2 border-white scale-110 shadow-lg opacity-100 mx-1';
+          btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } else {
+          btn.className = 'relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden transition-all duration-300 cursor-pointer border-2 border-transparent opacity-50 hover:opacity-85';
+        }
+      });
+    }
+
+    let touchStartX = 0;
+    const touchArea = document.getElementById('lbTouchArea');
+    touchArea.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    touchArea.addEventListener('touchend', (e) => {
+      const diff = e.changedTouches[0].screenX - touchStartX;
+      if (Math.abs(diff) > 45) {
+        navegarLightbox(diff < 0 ? 1 : -1);
+      }
+    }, { passive: true });
+
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('lightbox').classList.contains('hidden')) return;
+      if (e.key === 'Escape') fecharLightbox();
+      if (e.key === 'ArrowRight') navegarLightbox(1);
+      if (e.key === 'ArrowLeft') navegarLightbox(-1);
+    });
+
+    function alternarTema() {
+      const html = document.documentElement;
+      html.classList.toggle('dark');
+      document.getElementById('iconeTema').textContent = html.classList.contains('dark') ? '☀️' : '🌙';
+    }
+
+    iniciarGaleria();
+  </script>
+</body>
+</html>
