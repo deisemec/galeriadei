@@ -127,54 +127,10 @@
   </div>
 
   <script>
-    // =========================================================================
+   // =========================================================================
     // COLE AQUI A URL DO SEU GOOGLE APPS SCRIPT PUBLICADO:
-    const API_URL = 'https://script.google.com/macros/s/SUA_URL_AQUI/exec'; 
+    const API_URL = 'COLE_AQUI_A_URL_DO_SEU_APP_DA_WEB_QUE_TERMINA_COM_EXEC'; 
     // =========================================================================
-
-    // Dados de demonstração (usados automaticamente enquanto API_URL estiver vazio)
-    const FOTOS_DEMO = [
-      {
-        id: '1',
-        titulo: 'Formação Continuada — Auxiliares de Apoio à Inclusão',
-        descricao: 'Encontro formativo com equipes escolares da rede municipal de Teresina sobre práticas inclusivas.',
-        album: 'Formações',
-        data: '14/11/2026',
-        url: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1400&q=80',
-        thumb: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80',
-        downloadUrl: '#'
-      },
-      {
-        id: '2',
-        titulo: 'Acompanhamento Técnico nas Salas de Recursos Multifuncionais',
-        descricao: 'Visita técnica da equipe DEI para monitoramento do atendimento educacional especializado (AEE).',
-        album: 'Visitas Técnicas',
-        data: '10/11/2026',
-        url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=80',
-        thumb: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
-        downloadUrl: '#'
-      },
-      {
-        id: '3',
-        titulo: 'Planejamento Estratégico DEI 2027',
-        descricao: 'Reunião de alinhamento de metas, lotação e fluxos operacionais da Divisão de Educação Inclusiva.',
-        album: 'Ações Internas',
-        data: '05/11/2026',
-        url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1400&q=80',
-        thumb: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80',
-        downloadUrl: '#'
-      },
-      {
-        id: '4',
-        titulo: 'Oficina de Tecnologia Assistiva e Comunicação Alternativa',
-        descricao: 'Apresentação de recursos pedagógicos adaptados para estudantes com deficiência.',
-        album: 'Formações',
-        data: '28/10/2026',
-        url: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1400&q=80',
-        thumb: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80',
-        downloadUrl: '#'
-      }
-    ];
 
     let todasFotos = [];
     let fotosFiltradas = [];
@@ -184,9 +140,9 @@
     let lightboxIndex = 0;
 
     async function iniciarGaleria() {
-      if (!API_URL) {
-        todasFotos = FOTOS_DEMO;
-        renderizarTudo();
+      if (!API_URL || API_URL.includes('COLE_AQUI')) {
+        document.getElementById('heroTitulo').textContent = 'Configure a URL do Apps Script';
+        document.getElementById('heroDesc').textContent = 'Cole o link /exec da implantação na variável API_URL do arquivo index.html.';
         return;
       }
 
@@ -196,15 +152,14 @@
         if (dados.status === 'ok' && dados.fotos.length > 0) {
           todasFotos = dados.fotos;
         } else {
-          todasFotos = FOTOS_DEMO;
+          todasFotos = [];
         }
       } catch (e) {
         console.error('Erro ao carregar fotos do Drive:', e);
-        todasFotos = FOTOS_DEMO;
+        todasFotos = [];
       }
       renderizarTudo();
     }
-
     function renderizarTudo() {
       gerarBotoesAlbuns();
       iniciarHero(todasFotos.slice(0, 5)); // Top 5 fotos no destaque
